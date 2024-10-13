@@ -5,7 +5,7 @@ namespace ketchupbot_discord;
 
 public static class BlogTracker
 {
-    private const string Url = "https://blog.smallketchup.ca/feed.xml";
+    private const string Url = "https://smallketchup.ca/feed.xml";
 
     private static DateTimeOffset? _lastUpdate;
 
