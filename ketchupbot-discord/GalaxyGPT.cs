@@ -163,7 +163,7 @@ public static class GalaxyGpt
             }
 
             answerMessage.AppendLine(
-                $"KBD Version: {ThisAssembly.Git.Commit} | GalaxyGPT Version: {apiResponse.Version}");
+                $"{ThisAssembly.Git.Commit} | {apiResponse.Version}");
 
             #endregion
 
