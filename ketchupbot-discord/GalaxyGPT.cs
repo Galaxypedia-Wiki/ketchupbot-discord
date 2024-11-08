@@ -53,7 +53,7 @@ public static class GalaxyGpt
                 if (!string.IsNullOrWhiteSpace(finalResponseMessage))
                 {
                     finalResponseMessage += $"\n\n{ThisAssembly.Git.Commit} | {finalResponse.version}";
-                    await message.ReplyAsync(finalResponseMessage);
+                    await message.ReplyAsync(finalResponseMessage, allowedMentions: AllowedMentions.None);
                 }
             }
             catch (Exception e)
