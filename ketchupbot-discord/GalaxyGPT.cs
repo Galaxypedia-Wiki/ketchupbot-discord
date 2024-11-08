@@ -15,7 +15,7 @@ public static class GalaxyGpt
 {
     private static readonly HttpClient HttpClient = new();
 
-    private static int _maxResponseLength = 1800;
+    private const int MaxResponseLength = 1800;
 
     // Use port 6363 for development and 3636 for production
 #if !DEBUG
@@ -48,8 +48,13 @@ public static class GalaxyGpt
             IDisposable? typing = message.Channel.EnterTypingState();
             try
             {
-                JsonNode? finalResponse = await HandleConversation(client, message);
-                await message.ReplyAsync(finalResponse?["message"]?.ToString());
+                (JsonNode? response, string? version) finalResponse = await HandleConversation(client, message);
+                string? finalResponseMessage = finalResponse.response?["message"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(finalResponseMessage))
+                {
+                    finalResponseMessage += $"\n\n{ThisAssembly.Git.Commit} | {finalResponse.version}";
+                    await message.ReplyAsync(finalResponseMessage);
+                }
             }
             catch (Exception e)
             {
@@ -126,13 +131,13 @@ public static class GalaxyGpt
                     .AppendLine();
 
             #region Response Answer
-            int _reducedMaxResponseLength = _maxResponseLength;
+            int reducedMaxResponseLength = MaxResponseLength;
             // If verbose, take off an additional 25% to account for the extra information
             if (verbose)
-                _reducedMaxResponseLength = (int)(_reducedMaxResponseLength * 0.75);
+                reducedMaxResponseLength = (int)(reducedMaxResponseLength * 0.75);
 
-            if (apiResponse.Answer.Length > _reducedMaxResponseLength)
-                answerMessage.AppendLine(apiResponse.Answer[.._reducedMaxResponseLength] +
+            if (apiResponse.Answer.Length > reducedMaxResponseLength)
+                answerMessage.AppendLine(apiResponse.Answer[..reducedMaxResponseLength] +
                                          " (truncated)");
             else
                 answerMessage.AppendLine(apiResponse.Answer);
@@ -200,7 +205,9 @@ public static class GalaxyGpt
         }
     }
 
-    private static async Task<JsonNode?> HandleConversation(DiscordSocketClient client, SocketUserMessage message)
+    private static async Task<(JsonNode? response, string? version)>
+        HandleConversation(DiscordSocketClient client,
+            SocketUserMessage message)
     {
         // The message is a reply to the bot. Let's start by adding the message to the list, and setting the bot's message as the current message in the chain to process
         var messages = new List<IUserMessage> { message };
@@ -241,7 +248,7 @@ public static class GalaxyGpt
 
         messages.Reverse();
 
-        // I can't be bothered to create a class for this so we're gonna be using dictionaries
+        // I can't be bothered to create a class for this so we're going to be using dictionaries
         var messagesFormatted = new List<Dictionary<string, string>>();
 
         foreach (IUserMessage userMessage in messages)
@@ -277,7 +284,8 @@ public static class GalaxyGpt
 
         JsonNode? finalResponse =
             jsonResponse["conversation"]!.AsArray().Last(m => m?["role"]?.ToString() == "assistant");
-        return finalResponse;
+        string? apiVersion = jsonResponse["version"]?.ToString();
+        return (finalResponse, apiVersion);
     }
 
     private static async Task<ApiResponse> GetApiResponse(SocketUserMessage message, string messageContent)
