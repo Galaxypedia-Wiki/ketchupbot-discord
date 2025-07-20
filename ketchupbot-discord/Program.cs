@@ -109,23 +109,4 @@ public class Program
         });
         return Task.CompletedTask;
     }
-
-    private static Task BlogTrackerHandler()
-    {
-        _ = Task.Run(async () =>
-        {
-            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(15));
-
-            while (await timer.WaitForNextTickAsync())
-            {
-                if (!BlogTracker.CheckForUpdates()) continue;
-
-                if (await _client.GetChannelAsync(913918135785111572) is not IMessageChannel channel)
-                    throw new InvalidOperationException("Channel not found");
-
-                await channel.SendMessageAsync($"New blog post!\n{BlogTracker.GetLatestPostUrl()}");
-            }
-        });
-        return Task.CompletedTask;
-    }
 }
