@@ -41,7 +41,6 @@ public class Program
 
         _client.Log += Log;
         _client.Ready += Ready;
-        _client.Ready += BlogTrackerHandler;
         _client.MessageReceived += AutoPublishAnnouncements;
         _client.MessageReceived += GalaxyGptHandler;
         _client.InteractionCreated += async interaction =>
